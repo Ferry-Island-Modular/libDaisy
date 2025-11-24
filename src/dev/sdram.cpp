@@ -81,6 +81,16 @@ SdramHandle::Result SdramHandle::PeriphInit()
     dsy_sdram.hsdram.Init.ReadBurst       = FMC_SDRAM_RBURST_ENABLE;
     dsy_sdram.hsdram.Init.ReadPipeDelay   = FMC_SDRAM_RPIPE_DELAY_0;
     /* SdramTiming */
+    // This seems pretty stable
+    SdramTiming.LoadToActiveDelay    = 1;
+    SdramTiming.ExitSelfRefreshDelay = 5;
+    SdramTiming.SelfRefreshTime      = 4;
+    SdramTiming.RowCycleDelay        = 6;
+    SdramTiming.WriteRecoveryTime    = 3;
+    SdramTiming.RPDelay              = 16;
+    SdramTiming.RCDDelay             = 8;
+
+    /*
     SdramTiming.LoadToActiveDelay    = 2;
     SdramTiming.ExitSelfRefreshDelay = 7;
     SdramTiming.SelfRefreshTime      = 4;
@@ -88,13 +98,7 @@ SdramHandle::Result SdramHandle::PeriphInit()
     SdramTiming.WriteRecoveryTime    = 3;
     SdramTiming.RPDelay              = 16;
     SdramTiming.RCDDelay             = 10; // started at 2
-    //    SdramTiming.LoadToActiveDelay = 16;
-    //    SdramTiming.ExitSelfRefreshDelay = 16;
-    //    SdramTiming.SelfRefreshTime = 16;
-    //    SdramTiming.RowCycleDelay = 16;
-    //    SdramTiming.WriteRecoveryTime = 16;
-    //    SdramTiming.RPDelay = 16;
-    //    SdramTiming.RCDDelay = 16;
+    */
 
     if(HAL_SDRAM_Init(&dsy_sdram.hsdram, &SdramTiming) != HAL_OK)
     {
