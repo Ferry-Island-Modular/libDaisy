@@ -78,10 +78,14 @@ class AnalogControl
     */
     void SetSampleRate(float sample_rate);
 
+    inline bool isBipolar() { return is_bipolar_; }
+
+  protected:
+    float scale_, offset_;
+
   private:
     uint16_t *raw_;
     float     coeff_, samplerate_, val_;
-    float     scale_, offset_;
     bool      flip_;
     bool      invert_;
     bool      is_bipolar_;
