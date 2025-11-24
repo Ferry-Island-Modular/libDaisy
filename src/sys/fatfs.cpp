@@ -14,10 +14,10 @@ FatFSInterface::Result FatFSInterface::Init(const FatFSInterface::Config& cfg)
         ret = FATFS_LinkDriver(&SD_Driver, path_[0]) == FR_OK
                   ? Result::OK
                   : Result::ERR_TOO_MANY_VOLUMES;
-    if(cfg_.media & Config::MEDIA_USB)
-        ret = FATFS_LinkDriver(&USBH_Driver, path_[1]) == FR_OK
-                  ? Result::OK
-                  : Result::ERR_TOO_MANY_VOLUMES;
+    // if(cfg_.media & Config::MEDIA_USB)
+    //     ret = FATFS_LinkDriver(&USBH_Driver, path_[1]) == FR_OK
+    //               ? Result::OK
+    //               : Result::ERR_TOO_MANY_VOLUMES;
     if(ret == Result::OK)
         initialized_ = true;
     return ret;
@@ -37,10 +37,10 @@ FatFSInterface::Result FatFSInterface::DeInit()
         ret = FATFS_UnLinkDriver(path_[0]) == FR_OK
                   ? Result::OK
                   : Result::ERR_TOO_MANY_VOLUMES;
-    if(cfg_.media & Config::MEDIA_USB)
-        ret = FATFS_UnLinkDriver(path_[1]) == FR_OK
-                  ? Result::OK
-                  : Result::ERR_TOO_MANY_VOLUMES;
+    // if(cfg_.media & Config::MEDIA_USB)
+    //     ret = FATFS_UnLinkDriver(path_[1]) == FR_OK
+    //               ? Result::OK
+    //               : Result::ERR_TOO_MANY_VOLUMES;
     if(ret == Result::OK)
         initialized_ = false;
     return ret;
@@ -48,5 +48,8 @@ FatFSInterface::Result FatFSInterface::DeInit()
 
 extern "C"
 {
-    DWORD get_fattime(void) { return 0; }
+    DWORD get_fattime(void)
+    {
+        return 0;
+    }
 }

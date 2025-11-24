@@ -90,32 +90,32 @@ extern "C"
     }
 
     /** USB IRQ Handlers since they are shared resources for multiple classes */
-    extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
-    extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
+    // extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
+    // extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 
-    void OTG_HS_EP1_OUT_IRQHandler(void)
-    {
-        if(hhcd_USB_OTG_HS.Instance)
-            HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
-        if(hpcd_USB_OTG_HS.Instance)
-            HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
-    }
+    // void OTG_HS_EP1_OUT_IRQHandler(void)
+    // {
+    //     if(hhcd_USB_OTG_HS.Instance)
+    //         HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
+    //     if(hpcd_USB_OTG_HS.Instance)
+    //         HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
+    // }
 
-    void OTG_HS_EP1_IN_IRQHandler(void)
-    {
-        if(hhcd_USB_OTG_HS.Instance)
-            HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
-        if(hpcd_USB_OTG_HS.Instance)
-            HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
-    }
+    // void OTG_HS_EP1_IN_IRQHandler(void)
+    // {
+    //     if(hhcd_USB_OTG_HS.Instance)
+    //         HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
+    //     if(hpcd_USB_OTG_HS.Instance)
+    //         HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
+    // }
 
-    void OTG_HS_IRQHandler(void)
-    {
-        if(hhcd_USB_OTG_HS.Instance)
-            HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
-        if(hpcd_USB_OTG_HS.Instance)
-            HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
-    }
+    // void OTG_HS_IRQHandler(void)
+    // {
+    //     if(hhcd_USB_OTG_HS.Instance)
+    //         HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
+    //     if(hpcd_USB_OTG_HS.Instance)
+    //         HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
+    // }
 
     // TODO: Add some real handling to the HardFaultHandler
     void HardFault_Handler()
@@ -123,6 +123,24 @@ extern "C"
         // Grab an instance of the SCB so we can `p/x *scb` from the debugger
         SCB_Type* scb = SCB;
         (void)(scb);
+
+        // Extract the stack frame to pass to crash logger
+        // The Cortex-M automatically pushes R0-R3, R12, LR, PC, xPSR onto the stack
+        // We need to determine which stack pointer (MSP or PSP) was active
+        uint32_t* stack_frame;
+
+        __asm volatile(
+            "tst lr, #4        \n"  // Test bit 2 of LR (EXC_RETURN)
+            "ite eq            \n"  // If-Then-Else
+            "mrseq %0, msp     \n"  // If zero: use Main Stack Pointer
+            "mrsne %0, psp     \n"  // If non-zero: use Process Stack Pointer
+            : "=r"(stack_frame)     // Output
+            :                       // No input
+            :                       // No clobbers
+        );
+
+        extern void UserHardFaultIndicator(uint32_t*);
+        UserHardFaultIndicator(stack_frame);
 
         // Identify hardfault type
         if(SCB->HFSR & SCB_HFSR_FORCED_Msk)
@@ -221,7 +239,7 @@ void System::Init(const System::Config& config)
     dsy_dma_init();
     dsy_i2c_global_init();
     dsy_spi_global_init();
-    dsy_uart_global_init();
+    //dsy_uart_global_init();
 
     // Initialize Caches
     if(config.use_dcache)
@@ -322,14 +340,14 @@ void System::ConfigureClocks()
     RCC_ClkInitTypeDef       RCC_ClkInitStruct   = {0};
     RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
-    /** Supply configuration update enable 
+    /** Supply configuration update enable
   */
     HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
 
-    /** Configure the main internal regulator output voltage 
+    /** Configure the main internal regulator output voltage
      ** and set PLLN value, and flash-latency.
      **
-     ** See page 159 of Reference manual for VOS/Freq relationship 
+     ** See page 159 of Reference manual for VOS/Freq relationship
      ** and table for flash latency.
      */
 
@@ -350,10 +368,10 @@ void System::ConfigureClocks()
     }
 
     while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
-    /** Macro to configure the PLL clock source 
+    /** Macro to configure the PLL clock source
   */
     __HAL_RCC_PLL_PLLSOURCE_CONFIG(RCC_PLLSOURCE_HSE);
-    /** Initializes the CPU, AHB and APB busses clocks 
+    /** Initializes the CPU, AHB and APB busses clocks
   */
     RCC_OscInitStruct.OscillatorType
         = RCC_OSCILLATORTYPE_HSI48 | RCC_OSCILLATORTYPE_HSE;
@@ -374,7 +392,7 @@ void System::ConfigureClocks()
     {
         Error_Handler();
     }
-    /** Initializes the CPU, AHB and APB busses clocks 
+    /** Initializes the CPU, AHB and APB busses clocks
   */
     RCC_ClkInitStruct.ClockType
         = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1
@@ -396,8 +414,8 @@ void System::ConfigureClocks()
           | RCC_PERIPHCLK_USART234578 | RCC_PERIPHCLK_LPUART1
           | RCC_PERIPHCLK_RNG | RCC_PERIPHCLK_SPI1 | RCC_PERIPHCLK_SAI2
           | RCC_PERIPHCLK_SAI1 | RCC_PERIPHCLK_SDMMC | RCC_PERIPHCLK_I2C2
-          | RCC_PERIPHCLK_ADC | RCC_PERIPHCLK_I2C1 | RCC_PERIPHCLK_USB
-          | RCC_PERIPHCLK_QSPI | RCC_PERIPHCLK_FMC;
+          | RCC_PERIPHCLK_ADC | RCC_PERIPHCLK_I2C1 | RCC_PERIPHCLK_QSPI
+          | RCC_PERIPHCLK_FMC;
     // PLL 2
     //  PeriphClkInitStruct.PLL2.PLL2N = 115; // Max Freq @ 3v3
     //PeriphClkInitStruct.PLL2.PLL2N      = 84; // Max Freq @ 1V9
@@ -443,15 +461,15 @@ void System::ConfigureClocks()
     PeriphClkInitStruct.Usart16ClockSelection = RCC_USART16CLKSOURCE_D2PCLK2;
     PeriphClkInitStruct.I2c123ClockSelection  = RCC_I2C123CLKSOURCE_D2PCLK1;
     PeriphClkInitStruct.I2c4ClockSelection    = RCC_I2C4CLKSOURCE_PLL3;
-    PeriphClkInitStruct.UsbClockSelection     = RCC_USBCLKSOURCE_HSI48;
-    PeriphClkInitStruct.AdcClockSelection     = RCC_ADCCLKSOURCE_PLL3;
+    //PeriphClkInitStruct.UsbClockSelection     = RCC_USBCLKSOURCE_HSI48;
+    PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL3;
     if(HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
         Error_Handler();
     }
 
     /** Enable USB Voltage detector */
-    HAL_PWREx_EnableUSBVoltageDetector();
+    //HAL_PWREx_EnableUSBVoltageDetector();
 }
 
 void System::ConfigureMpu()

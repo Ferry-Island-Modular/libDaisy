@@ -214,6 +214,12 @@ namespace daisy
 class System
 {
   public:
+    static void Delay(uint32_t delay_ms) {}
+
+    static void DelayUs(uint32_t delay_us) {}
+
+    static void DelayTicks(uint32_t delay_ticks) {}
+
     static uint32_t GetNow()
     {
         return testIsolator_.GetStateForCurrentTest()->currentUs_ / 1000;

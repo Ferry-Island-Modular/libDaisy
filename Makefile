@@ -13,12 +13,13 @@ util/hal_map \
 util/oled_fonts \
 util/sd_diskio \
 util/unique_id \
-util/usbh_diskio \
 sys/system_stm32h7xx \
 usbd/usbd_cdc_if \
 usbd/usbd_desc \
 usbd/usbd_conf \
 usbh/usbh_conf
+#util/usbh_diskio \
+
 
 CPP_MODULES = \
 daisy_seed \
