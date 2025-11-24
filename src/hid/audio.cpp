@@ -31,7 +31,7 @@ class AudioHandle::Impl
     // Interface
     AudioHandle::Result Init(const AudioHandle::Config config, SaiHandle sai);
     AudioHandle::Result
-                        Init(const AudioHandle::Config config, SaiHandle sai1, SaiHandle sai2);
+    Init(const AudioHandle::Config config, SaiHandle sai1, SaiHandle sai2);
     AudioHandle::Result DeInit();
     AudioHandle::Result Start(AudioHandle::AudioCallback callback);
     AudioHandle::Result Start(AudioHandle::InterleavingAudioCallback callback);
@@ -173,10 +173,10 @@ AudioHandle::Impl::Start(AudioHandle::AudioCallback callback)
     if(sai2_.IsInitialized())
     {
         // Start stream with no callback. Data will be filled externally.
-        sai2_.StartDma(
+        sai1_.StartDma(
             buff_rx_[1], buff_tx_[1], config_.blocksize * 2 * 2, nullptr);
     }
-    sai1_.StartDma(buff_rx_[0],
+    sai2_.StartDma(buff_rx_[0],
                    buff_tx_[0],
                    config_.blocksize * 2 * 2,
                    audio_handle.InternalCallback);
@@ -188,6 +188,13 @@ AudioHandle::Impl::Start(AudioHandle::AudioCallback callback)
 AudioHandle::Result
 AudioHandle::Impl::Start(AudioHandle::InterleavingAudioCallback callback)
 {
+    // Get instance of object
+    if(sai2_.IsInitialized())
+    {
+        // Start stream with no callback. Data will be filled externally.
+        sai2_.StartDma(
+            buff_rx_[1], buff_tx_[1], config_.blocksize * 2 * 2, nullptr);
+    }
     // Get instance of object
     sai1_.StartDma(buff_rx_[0],
                    buff_tx_[0],
