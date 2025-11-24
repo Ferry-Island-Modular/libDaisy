@@ -26,6 +26,10 @@ void ShiftRegister595::Set(uint8_t idx, bool state)
     else
         state_[dev] &= ~(1 << bit);
 }
+void ShiftRegister595::SetState(uint8_t state, uint8_t dev)
+{
+    state_[dev] = state;
+}
 void ShiftRegister595::Write()
 {
     // This is about 2MHz clock speeds without delays

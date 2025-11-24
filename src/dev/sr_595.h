@@ -42,10 +42,16 @@ class ShiftRegister595
     void Init(dsy_gpio_pin *pin_cfg, size_t num_daisy_chained = 1);
 
     /** Sets the state of the specified output.
-        \param idx The index starts with QA on the first device and ends with QH on the last device.
+    \param idx The index starts with QA on the first device and ends with QH on the last device.
     \param state A true state will set the output HIGH, while a false state will set the output LOW.
     */
     void Set(uint8_t idx, bool state);
+
+    /** Sets the state for all 8 pins at once.
+    \param state An 8-bit number representing the bitwise state of the 8 595 pins.
+    \param dev Index to the device for which state you'd like to set.
+    */
+    void SetState(uint8_t state, uint8_t dev);
 
     /** Writes the states of shift register out to the connected devices.
      */
