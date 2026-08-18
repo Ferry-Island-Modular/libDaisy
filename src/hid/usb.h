@@ -25,7 +25,17 @@ class UsbHandle
         ERR,
     };
 
-    /** Specified which of the two USB Peripherals to initialize. */
+    /** Specified which of the two USB Peripherals to initialize.
+     **
+     ** FourSeas fork: FS_INTERNAL is the only supported mode here. The
+     ** external port runs on OTG_HS, and this fork compiles the OTG_HS
+     ** interrupt handlers out unless it is built with FOURSEAS_TRIM=0 (see
+     ** the top of libDaisy's Makefile). Init() and the rest of the bring-up
+     ** still succeed for FS_EXTERNAL and FS_BOTH, but with no interrupt
+     ** reaching the device stack the port never enumerates, and it fails
+     ** silently rather than returning an error. Anything needing the
+     ** external port must build the library with FOURSEAS_TRIM=0.
+     */
     enum UsbPeriph
     {
         FS_INTERNAL, /**< Internal pin */

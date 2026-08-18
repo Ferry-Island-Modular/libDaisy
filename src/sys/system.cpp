@@ -124,27 +124,25 @@ extern "C"
 #endif // ifndef FOURSEAS_NO_USB
 
     // TODO: Add some real handling to the HardFaultHandler
-    void HardFault_Handler()
+
+    /** Body of the hard fault handler. Entered from HardFault_Handler below,
+     ** which is what recovers the stack frame pointer. Never returns.
+     **
+     ** \param stack_frame The exception stack frame the core pushed when the
+     **        fault was taken: R0-R3, R12, LR, PC, xPSR.
+     */
+    void HardFault_Handler_C(uint32_t* stack_frame)
     {
         // Grab an instance of the SCB so we can `p/x *scb` from the debugger
         SCB_Type* scb = SCB;
         (void)(scb);
 
-        // Extract the stack frame to pass to crash logger
-        // The Cortex-M automatically pushes R0-R3, R12, LR, PC, xPSR onto the stack
-        // We need to determine which stack pointer (MSP or PSP) was active
-        uint32_t* stack_frame;
-
-        __asm volatile(
-            "tst lr, #4        \n" // Test bit 2 of LR (EXC_RETURN)
-            "ite eq            \n" // If-Then-Else
-            "mrseq %0, msp     \n" // If zero: use Main Stack Pointer
-            "mrsne %0, psp     \n" // If non-zero: use Process Stack Pointer
-            : "=r"(stack_frame)    // Output
-            :                      // No input
-            :                      // No clobbers
-        );
-
+        /** Deliberately not declared weak. A weak default would let an
+         ** application link without noticing that it has no crash logging,
+         ** and losing crash logs silently is worse than a link error that
+         ** says exactly what is missing. Bring-up sketches that do not want
+         ** logging add a one-line empty stub.
+         */
         extern void UserHardFaultIndicator(uint32_t*);
         UserHardFaultIndicator(stack_frame);
 
@@ -217,6 +215,40 @@ extern "C"
         __asm("BKPT #0");
         while(1)
             ;
+    }
+
+    /** Hard fault entry point, as named in the vector table.
+     **
+     ** On entry lr holds EXC_RETURN, whose bit 2 says which stack the core
+     ** pushed the exception frame onto: clear for the main stack, set for the
+     ** process stack. That pointer is what the crash logger needs, so it is
+     ** recovered into r0 and passed to HardFault_Handler_C.
+     **
+     ** The function has to be naked. In an ordinary function the compiler
+     ** owns the prologue, and anything emitted there that writes lr would
+     ** leave the test below reading a return address instead of EXC_RETURN.
+     ** That fails silently: the handler still runs, but it decodes the wrong
+     ** stack and writes a garbage crash log. A naked function gets no
+     ** prologue, so the test is guaranteed to be the first instruction
+     ** executed. Naked functions may only contain basic asm, hence the fixed
+     ** register rather than an operand constraint.
+     **
+     ** To re-check the guarantee after a toolchain or compiler flag change:
+     **
+     **   arm-none-eabi-objdump -d build/src/sys/system.o
+     **
+     ** and confirm `tst.w lr, #4` is the first instruction of
+     ** HardFault_Handler, with no prologue ahead of it.
+     **
+     ** HardFault_Handler_C never returns, so this is a tail call.
+     */
+    __attribute__((naked)) void HardFault_Handler(void)
+    {
+        __asm volatile("tst lr, #4            \n" // Bit 2 of EXC_RETURN
+                       "ite eq                \n"
+                       "mrseq r0, msp         \n" // Clear: main stack
+                       "mrsne r0, psp         \n" // Set: process stack
+                       "b HardFault_Handler_C \n");
     }
 }
 

@@ -185,6 +185,13 @@ AudioHandle::Impl::Start(AudioHandle::AudioCallback callback)
     return Result::OK;
 }
 
+/** FourSeas fork: this overload still uses the original SAI pairing, where
+ ** sai1_ carries the callback and sai2_ is the silent stream. That is the
+ ** pairing the crackle fix replaced. Only the AudioCallback overload above
+ ** was corrected, since that is the one Four Seas starts. Anything switching
+ ** to the interleaved callback needs the same swap applied here first, and
+ ** needs it verified on hardware.
+ */
 AudioHandle::Result
 AudioHandle::Impl::Start(AudioHandle::InterleavingAudioCallback callback)
 {

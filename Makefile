@@ -5,9 +5,15 @@ MODULE_DIR=src
 # FourSeas fork: the Four Seas application uses SDMMC/FatFS, QSPI, SAI, ADC,
 # I2C, SPI, GPIO, DMA, IWDG and timers, but neither USB host nor UART. Leaving
 # their bring-up out keeps the USB host stack and the UART HAL out of the final
-# link, which saves internal flash. Build with FOURSEAS_TRIM=0 for stock
-# upstream behaviour.
-FOURSEAS_TRIM ?= 1
+# link, which saves internal flash.
+#
+# The trim is on unless FOURSEAS_TRIM is set to exactly 0. It is deliberately
+# not a `?=` default: this fork has one consumer, and an exported but empty
+# FOURSEAS_TRIM in someone's environment would then quietly turn the trim off
+# and produce a library that links but overflows flash much later. Testing
+# only for an explicit 0 means the trim can only be disabled on purpose.
+#
+# Build with FOURSEAS_TRIM=0 for stock upstream behaviour.
 
 C_MODULES = \
 sys/dma \
@@ -25,7 +31,7 @@ usbd/usbd_desc \
 usbd/usbd_conf \
 usbh/usbh_conf
 
-ifneq ($(FOURSEAS_TRIM), 1)
+ifeq ($(FOURSEAS_TRIM),0)
 C_MODULES += util/usbh_diskio
 endif
 
@@ -311,7 +317,7 @@ C_DEFS =  \
 C_DEFS += -DFILEIO_ENABLE_FATFS_READER
 
 # FourSeas fork: see the FOURSEAS_TRIM comment at the top of this file.
-ifeq ($(FOURSEAS_TRIM), 1)
+ifneq ($(FOURSEAS_TRIM),0)
 C_DEFS += -DFOURSEAS_NO_USB -DFOURSEAS_NO_UART
 endif
 
