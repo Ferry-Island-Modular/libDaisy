@@ -259,6 +259,15 @@ namespace daisy
 class System
 {
   public:
+    /** No-ops so that code under test can call the delay functions
+     *  without the tests actually having to wait.
+     */
+    static void Delay(uint32_t delay_ms) { (void)delay_ms; }
+
+    static void DelayUs(uint32_t delay_us) { (void)delay_us; }
+
+    static void DelayTicks(uint32_t delay_ticks) { (void)delay_ticks; }
+
     static uint32_t GetNow()
     {
         return testIsolator_.GetStateForCurrentTest()->currentUs_ / 1000;

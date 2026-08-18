@@ -130,6 +130,24 @@ extern "C"
         SCB_Type* scb = SCB;
         (void)(scb);
 
+        // Extract the stack frame to pass to crash logger
+        // The Cortex-M automatically pushes R0-R3, R12, LR, PC, xPSR onto the stack
+        // We need to determine which stack pointer (MSP or PSP) was active
+        uint32_t* stack_frame;
+
+        __asm volatile(
+            "tst lr, #4        \n" // Test bit 2 of LR (EXC_RETURN)
+            "ite eq            \n" // If-Then-Else
+            "mrseq %0, msp     \n" // If zero: use Main Stack Pointer
+            "mrsne %0, psp     \n" // If non-zero: use Process Stack Pointer
+            : "=r"(stack_frame)    // Output
+            :                      // No input
+            :                      // No clobbers
+        );
+
+        extern void UserHardFaultIndicator(uint32_t*);
+        UserHardFaultIndicator(stack_frame);
+
         // Identify hardfault type
         if(SCB->HFSR & SCB_HFSR_FORCED_Msk)
         {
