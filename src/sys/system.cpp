@@ -94,6 +94,7 @@ extern "C"
     }
 
     /** USB IRQ Handlers since they are shared resources for multiple classes */
+#ifndef FOURSEAS_NO_USB
     extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
     extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 
@@ -120,6 +121,7 @@ extern "C"
         if(hpcd_USB_OTG_HS.Instance)
             HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
     }
+#endif // ifndef FOURSEAS_NO_USB
 
     // TODO: Add some real handling to the HardFaultHandler
     void HardFault_Handler()
@@ -225,7 +227,9 @@ void System::Init(const System::Config& config)
     dsy_dma_init();
     dsy_i2c_global_init();
     dsy_spi_global_init();
+#ifndef FOURSEAS_NO_UART
     dsy_uart_global_init();
+#endif // ifndef FOURSEAS_NO_UART
 
     // Initialize Caches
     if(config.use_dcache)
@@ -459,8 +463,11 @@ void System::ConfigureClocks()
           | RCC_PERIPHCLK_USART234578 | RCC_PERIPHCLK_LPUART1
           | RCC_PERIPHCLK_RNG | RCC_PERIPHCLK_SPI1 | RCC_PERIPHCLK_SAI2
           | RCC_PERIPHCLK_SAI1 | RCC_PERIPHCLK_SDMMC | RCC_PERIPHCLK_I2C2
-          | RCC_PERIPHCLK_ADC | RCC_PERIPHCLK_I2C1 | RCC_PERIPHCLK_USB
-          | RCC_PERIPHCLK_QSPI | RCC_PERIPHCLK_FMC;
+          | RCC_PERIPHCLK_ADC | RCC_PERIPHCLK_I2C1 | RCC_PERIPHCLK_QSPI
+          | RCC_PERIPHCLK_FMC;
+#ifndef FOURSEAS_NO_USB
+    PeriphClkInitStruct.PeriphClockSelection |= RCC_PERIPHCLK_USB;
+#endif // ifndef FOURSEAS_NO_USB
     // PLL 2
     //  PeriphClkInitStruct.PLL2.PLL2N = 115; // Max Freq @ 3v3
     //PeriphClkInitStruct.PLL2.PLL2N      = 84; // Max Freq @ 1V9
@@ -506,15 +513,19 @@ void System::ConfigureClocks()
     PeriphClkInitStruct.Usart16ClockSelection = RCC_USART16CLKSOURCE_D2PCLK2;
     PeriphClkInitStruct.I2c123ClockSelection  = RCC_I2C123CLKSOURCE_D2PCLK1;
     PeriphClkInitStruct.I2c4ClockSelection    = RCC_I2C4CLKSOURCE_PLL3;
-    PeriphClkInitStruct.UsbClockSelection     = RCC_USBCLKSOURCE_HSI48;
-    PeriphClkInitStruct.AdcClockSelection     = RCC_ADCCLKSOURCE_PLL3;
+#ifndef FOURSEAS_NO_USB
+    PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
+#endif // ifndef FOURSEAS_NO_USB
+    PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL3;
     if(HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
         Error_Handler();
     }
 
+#ifndef FOURSEAS_NO_USB
     /** Enable USB Voltage detector */
     HAL_PWREx_EnableUSBVoltageDetector();
+#endif // ifndef FOURSEAS_NO_USB
 }
 
 void System::ConfigureMpu()

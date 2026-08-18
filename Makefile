@@ -2,6 +2,13 @@ TARGET = libdaisy
 
 MODULE_DIR=src
 
+# FourSeas fork: the Four Seas application uses SDMMC/FatFS, QSPI, SAI, ADC,
+# I2C, SPI, GPIO, DMA, IWDG and timers, but neither USB host nor UART. Leaving
+# their bring-up out keeps the USB host stack and the UART HAL out of the final
+# link, which saves internal flash. Build with FOURSEAS_TRIM=0 for stock
+# upstream behaviour.
+FOURSEAS_TRIM ?= 1
+
 C_MODULES = \
 sys/dma \
 hid/audio \
@@ -12,12 +19,15 @@ util/bsp_sd_diskio \
 util/oled_fonts \
 util/sd_diskio \
 util/unique_id \
-util/usbh_diskio \
 sys/system_stm32h7xx \
 usbd/usbd_cdc_if \
 usbd/usbd_desc \
 usbd/usbd_conf \
 usbh/usbh_conf
+
+ifneq ($(FOURSEAS_TRIM), 1)
+C_MODULES += util/usbh_diskio
+endif
 
 CPP_MODULES = \
 daisy_seed \
@@ -299,6 +309,11 @@ C_DEFS =  \
 
 # File I/O Abstract Interface for FatFS:
 C_DEFS += -DFILEIO_ENABLE_FATFS_READER
+
+# FourSeas fork: see the FOURSEAS_TRIM comment at the top of this file.
+ifeq ($(FOURSEAS_TRIM), 1)
+C_DEFS += -DFOURSEAS_NO_USB -DFOURSEAS_NO_UART
+endif
 
 C_INCLUDES = \
 -I$(MODULE_DIR) \
