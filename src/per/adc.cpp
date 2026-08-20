@@ -262,44 +262,54 @@ void AdcHandle::Init(AdcChannelConfig* cfg,
             = ADC_REGOVERSAMPLING_CONTINUED_MODE;
         adc.hadc1.Init.Oversampling.TriggeredMode
             = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
+        // Oversampling.Ratio is the SAMPLE COUNT (2^n), not the register
+        // field value. STM32H7 HAL >= 1.11 programs the OVSR field as
+        // (Ratio - 1) (see stm32h7xx_hal_adc.c, the ADC1/2 CFGR2 write); the
+        // v1.5-era HAL wrote (Ratio << OVSR_Pos) with no decrement, so the
+        // fork historically passed 2^n - 1 here. Passing 2^n - 1 under the
+        // newer HAL yields one fewer sample per average (e.g. 127 instead of
+        // 128), a small raw-domain gain error that, through the inverting
+        // affine V/Oct calibration, shows up as a large apparent pitch shift.
+        // Values below are the true sample counts; RightBitShift (divide by
+        // 2^n) is unchanged.
         switch(oversampling_)
         {
             case OVS_4:
                 adc.hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_2;
-                adc.hadc1.Init.Oversampling.Ratio         = 3;
+                adc.hadc1.Init.Oversampling.Ratio         = 4;
                 break;
             case OVS_8:
                 adc.hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_3;
-                adc.hadc1.Init.Oversampling.Ratio         = 7;
+                adc.hadc1.Init.Oversampling.Ratio         = 8;
                 break;
             case OVS_16:
                 adc.hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_4;
-                adc.hadc1.Init.Oversampling.Ratio         = 15;
+                adc.hadc1.Init.Oversampling.Ratio         = 16;
                 break;
             case OVS_32:
                 adc.hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_5;
-                adc.hadc1.Init.Oversampling.Ratio         = 31;
+                adc.hadc1.Init.Oversampling.Ratio         = 32;
                 break;
             case OVS_64:
                 adc.hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_6;
-                adc.hadc1.Init.Oversampling.Ratio         = 63;
+                adc.hadc1.Init.Oversampling.Ratio         = 64;
                 break;
             case OVS_128:
                 adc.hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_7;
-                adc.hadc1.Init.Oversampling.Ratio         = 127;
+                adc.hadc1.Init.Oversampling.Ratio         = 128;
                 break;
             case OVS_256:
                 adc.hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_8;
-                adc.hadc1.Init.Oversampling.Ratio         = 255;
+                adc.hadc1.Init.Oversampling.Ratio         = 256;
                 break;
             case OVS_512:
                 adc.hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_9;
-                adc.hadc1.Init.Oversampling.Ratio         = 511;
+                adc.hadc1.Init.Oversampling.Ratio         = 512;
                 break;
             case OVS_1024:
                 adc.hadc1.Init.Oversampling.RightBitShift
                     = ADC_RIGHTBITSHIFT_10;
-                adc.hadc1.Init.Oversampling.Ratio = 1023;
+                adc.hadc1.Init.Oversampling.Ratio = 1024;
                 break;
             default: break;
         }
